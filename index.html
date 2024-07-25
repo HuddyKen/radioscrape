@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Get User Location and Zip Code</title>
+    <script>
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(showPosition, showError);
+            } else {
+                document.getElementById('location-info').innerHTML = "Geolocation is not supported by this browser.";
+            }
+        }
+
+        function showPosition(position) {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            document.getElementById('location-info').innerHTML = 
+                "Latitude: " + lat + "<br>Longitude: " + lon;
+
+            // Call the OpenCage API to get the zip code
+            getZipCode(lat, lon);
+        }
+
+        function getZipCode(lat, lon) {
+            const apiKey = '9734fb38936e4efaba9db7587a11bd5f';
+            const url = `https://api.opencagedata.com/geocode/v1/json?q=${lat}+${lon}&key=${apiKey}`;
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.results.length > 0) {
+                        const components = data.results[0].components;
+                        const zip = components.postcode || 'N/A';
+                        document.getElementById('zip-info').innerHTML = "Zip Code: " + zip;
+                        openRadioLocator(zip);
+                    } else {
+                        document.getElementById('zip-info').innerHTML = "Zip Code: Not found";
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching the zip code:', error);
+                    document.getElementById('zip-info').innerHTML = "Error fetching the zip code";
+                });
+        }
+
+        function openRadioLocator(zip) {
+            const url = `https://radio-locator.com/cgi-bin/vacant?zip=${zip}`;
+            window.open(url, '_blank');
+        }
+
+        function showError(error) {
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    document.getElementById('location-info').innerHTML = "User denied the request for Geolocation."
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    document.getElementById('location-info').innerHTML = "Location information is unavailable."
+                    break;
+                case error.TIMEOUT:
+                    document.getElementById('location-info').innerHTML = "The request to get user location timed out."
+                    break;
+                case error.UNKNOWN_ERROR:
+                    document.getElementById('location-info').innerHTML = "An unknown error occurred."
+                    break;
+            }
+        }
+    </script>
+</head>
+<body onload="getLocation()">
+    <h3>Your Location</h3>
+    <div id="location-info">Loading...</div>
+    <h3>Your Zip Code</h3>
+    <div id="zip-info">Loading...</div>
+</body>
+</html>
